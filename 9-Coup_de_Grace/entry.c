@@ -16,7 +16,7 @@ void main_mouse_callback(uint16_t mouse_x, uint16_t mouse_y, uint8_t buttons) {
 }
 
 //Button handler for creating a new calculator
-void spawn_calculator(Button* button, int x, int y) {
+void spawn_calculator(Window* button_window, int x, int y) {
 
     static int calc_count = 0;
 
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     //Create a simple launcher window 
     Button* launch_button = Button_new(10, 10, 150, 30);
     Window_set_title((Window*)launch_button, "New Calculator");
-    launch_button->onmousedown = spawn_calculator;
+    launch_button->window.mouseclick_function = spawn_calculator;
     Window_insert_child((Window*)desktop, (Window*)launch_button);
 
     //Initial draw

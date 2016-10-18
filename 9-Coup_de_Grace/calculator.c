@@ -2,8 +2,9 @@
 #include "textbox.h"
 #include <inttypes.h>
 
-void Calculator_button_handler(Button* button, int x, int y) {
+void Calculator_button_handler(Window* button_window, int x, int y) {
 
+    Button* button = (Button*)button_window;
     Calculator* calculator = (Calculator*)button->window.parent;
 
     if(button == calculator->button_0) {
@@ -185,14 +186,14 @@ Calculator* Calculator_new(void) {
     Window_insert_child((Window*)calculator, (Window*)calculator->button_div);
 
     //We'll use the same handler to handle all of the buttons
-    calculator->button_1->onmousedown = calculator->button_2->onmousedown = 
-        calculator->button_3->onmousedown = calculator->button_4->onmousedown =
-        calculator->button_5->onmousedown = calculator->button_6->onmousedown =
-        calculator->button_7->onmousedown = calculator->button_8->onmousedown =
-        calculator->button_9->onmousedown = calculator->button_0->onmousedown =
-        calculator->button_add->onmousedown = calculator->button_sub->onmousedown = 
-        calculator->button_mul->onmousedown = calculator->button_div->onmousedown =
-        calculator->button_ent->onmousedown = calculator->button_c->onmousedown =
+    calculator->button_1->window.mouseclick_function = calculator->button_2->window.mouseclick_function = 
+        calculator->button_3->window.mouseclick_function = calculator->button_4->window.mouseclick_function =
+        calculator->button_5->window.mouseclick_function = calculator->button_6->window.mouseclick_function =
+        calculator->button_7->window.mouseclick_function = calculator->button_8->window.mouseclick_function =
+        calculator->button_9->window.mouseclick_function = calculator->button_0->window.mouseclick_function =
+        calculator->button_add->window.mouseclick_function = calculator->button_sub->window.mouseclick_function = 
+        calculator->button_mul->window.mouseclick_function = calculator->button_div->window.mouseclick_function =
+        calculator->button_ent->window.mouseclick_function = calculator->button_c->window.mouseclick_function =
         Calculator_button_handler;          
 
     //Create the textbox

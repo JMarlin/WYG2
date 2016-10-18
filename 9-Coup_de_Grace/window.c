@@ -55,11 +55,64 @@ int Window_init(Window* window, int16_t x, int16_t y, uint16_t width,
     window->drag_off_y = 0;
     window->last_button_state = 0;
     window->paint_function = Window_paint_handler;
-    window->mousedown_function = Window_mousedown_handler;
+    window->mousedown_function = (WindowMousedownHandler)0;
+    window->mouseup_function = (WindowMouseupHandler)0;
+    window->mouseover_function = (WindowMouseoverHandler)0;
+    window->mouseout_function = (WindowMouseoutHandler)0;
+    window->mousemove_function = (WindowMousemoveHandler)0;
+    window->mouseclick_function = (WindowMouseclickHandler)0;
     window->active_child = (Window*)0;
+    window->over_child = (Window*)0;
     window->title = (char*)0;
   
     return 1;
+}
+
+void Window_mousedown(Window* window, int x, int y) {
+
+    if(window->mousedown_function)
+        window->mousedown_function(window, x, y);
+}
+
+void Window_mouseup(Window* window, int x, int y) {
+
+    if(window->last_button_state)
+        Window_mouseclick(window, x, y);
+
+    if(window->mouseup_function)
+        window->mouseup_function(window, x, y);
+}
+
+void Window_mouseover(Window* window) {
+
+    if(window->mouseover_function)
+        window->mouseover_function(window);
+}
+
+void Window_mouseout(Window* window) {
+
+    window->last_button_state = 0;
+
+    if(window->over_child) {
+
+        Window_mouseout(window->over_child);
+        window->over_child = (Window*)0;
+    }
+
+    if(window->mouseout_function)
+        window->mouseout_function(window);    
+}
+
+void Window_mousemove(Window* window, int x, int y) {
+
+    if(window->mousemove_function)
+        window->mousemove_function(window, x, y);
+}
+
+void Window_mouseclick(Window* window, int x, int y) {
+
+    if(window->mouseclick_function)
+        window->mouseclick_function(window, x, y);
 }
 
 //Recursively get the absolute on-screen x-coordinate of this window
@@ -610,6 +663,20 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
     int i, inner_x1, inner_y1, inner_x2, inner_y2;
     Window* child;
 
+    if(window->drag_child) {
+
+        if(mouse_buttons) {
+
+            //Changed to use 
+            Window_move(window->drag_child, mouse_x - window->drag_off_x,
+                        mouse_y - window->drag_off_y);
+            return;
+        } else {
+
+            window->drag_child = (Window*)0;
+        }
+    }
+
     //If we had a button depressed, then we need to see if the mouse was
     //over any of the child windows
     //We go front-to-back in terms of the window stack for free occlusion
@@ -622,6 +689,18 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
            mouse_y >= child->y && mouse_y < (child->y + child->height))) 
             continue;
 
+        //Do mouseover and mouseout events 
+        if(child != window->over_child) {
+
+            if(window->over_child)
+                Window_mouseout(window->over_child);
+            else
+                Window_mouseout(window);
+
+            window->over_child = child;
+            Window_mouseover(window->over_child);
+        }            
+
         //Now we'll check to see if we're dragging a titlebar
         if(mouse_buttons && !window->last_button_state) {
 
@@ -629,11 +708,13 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
             //child, to be more consistent with most other GUIs
             Window_raise(child, 1);
 
-            //See if the mouse position lies within the bounds of the current
-            //window's 31 px tall titlebar
+            //See if the window has bodydrag enabled or 
+            //See if the mouse position lies within the bounds of the current titlebar
             //We check the decoration flag since we can't drag a window without a titlebar
-            if(!(child->flags & WIN_NODECORATION) && 
-                mouse_y >= child->y && mouse_y < (child->y + WIN_TITLEHEIGHT)) {
+            if((child->flags & WIN_BODYDRAG) || (
+               !(child->flags & WIN_NODECORATION) &&
+               mouse_y >= child->y && mouse_y < (child->y + WIN_TITLEHEIGHT)
+               )) {
 
                 //We'll also set this window as the window being dragged
                 //until such a time as the mouse is released
@@ -648,37 +729,37 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
         }
 
         //Found a target, so forward the mouse event to that window and quit looking
-        if(!window->drag_child) 
+        if(window->over_child) 
             Window_process_mouse(child, mouse_x - child->x, mouse_y - child->y, mouse_buttons); 
         
         break;
     }
 
-    //Moving this outside of the mouse-in-child detection since it doesn't really
-    //have anything to do with it
-    if(!mouse_buttons)
-        window->drag_child = (Window*)0;
+    //Do any not-over-a-child handling
+    if(i < 0) {
 
-    //Update drag window to match the mouse if we have an active drag window
-    if(window->drag_child) {
+        //If we were previously over a child, handle a mouseout event on it and clear the pointer
+        if(window->over_child && window->over_child->mouseout_function) {
 
-        //Changed to use 
-        Window_move(window->drag_child, mouse_x - window->drag_off_x,
-                    mouse_y - window->drag_off_y);
+            Window_mouseout(window->over_child);
+            window->over_child = (Window*)0;
+            
+            //We reentered the parent from a child, so fire a mouseover on the parent 
+            Window_mouseover(window);
+        }
     }
 
     //If we didn't find a target in the search, then we ourselves are the target of any clicks
-    if(window->mousedown_function && mouse_buttons && !window->last_button_state) 
-        window->mousedown_function(window, mouse_x, mouse_y);
+    if(mouse_buttons && !window->last_button_state) 
+        Window_mousedown(window, mouse_x, mouse_y);
+
+    if(!mouse_buttons && window->last_button_state)
+        Window_mouseup(window, mouse_x, mouse_y);
+
+    Window_mousemove(window, mouse_x, mouse_y);
 
     //Update the stored mouse button state to match the current state 
     window->last_button_state = mouse_buttons;
-}
-
-//The default handler for window mouse events doesn't do anything
-void Window_mousedown_handler(Window* window, int x, int y) {
- 
-    return;
 }
 
 void Window_update_context(Window* window, Context* context) {

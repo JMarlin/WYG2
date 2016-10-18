@@ -19,6 +19,7 @@
 //Some flags to define our window behavior
 #define WIN_NODECORATION 0x1
 #define WIN_NORAISE 0x2
+#define WIN_BODYDRAG 0x4
 
 //Forward struct declaration for function type declarations
 struct Window_struct;
@@ -26,6 +27,11 @@ struct Window_struct;
 //Callback function type declarations
 typedef void (*WindowPaintHandler)(struct Window_struct*);
 typedef void (*WindowMousedownHandler)(struct Window_struct*, int, int);
+typedef void (*WindowMouseupHandler)(struct Window_struct*, int, int);
+typedef void (*WindowMouseoverHandler)(struct Window_struct*);
+typedef void (*WindowMouseoutHandler)(struct Window_struct*);
+typedef void (*WindowMousemoveHandler)(struct Window_struct*, int, int);
+typedef void (*WindowMouseclickHandler)(struct Window_struct*, int, int);
 
 typedef struct Window_struct {  
     struct Window_struct* parent;
@@ -37,12 +43,18 @@ typedef struct Window_struct {
     Context* context;
     struct Window_struct* drag_child;
     struct Window_struct* active_child;
+    struct Window_struct* over_child;
     List* children;
     uint16_t drag_off_x;
     uint16_t drag_off_y;
     uint8_t last_button_state;
     WindowPaintHandler paint_function;
     WindowMousedownHandler mousedown_function;
+    WindowMouseupHandler mouseup_function;
+    WindowMouseoverHandler mouseover_function;
+    WindowMouseoutHandler mouseout_function;
+    WindowMousemoveHandler mousemove_function;
+    WindowMouseclickHandler mouseclick_function;
     char* title;
 } Window;
 
@@ -51,6 +63,12 @@ Window* Window_new(int16_t x, int16_t y, uint16_t width,
                    uint16_t height, uint16_t flags, Context* context);
 int Window_init(Window* window, int16_t x, int16_t y, uint16_t width,
                 uint16_t height, uint16_t flags, Context* context);
+void Window_mousedown(Window* window, int x, int y);
+void Window_mouseup(Window* window, int x, int y);
+void Window_mouseover(Window* window);
+void Window_mouseout(Window* window);
+void Window_mousemove(Window* window, int x, int y);
+void Window_mouseclick(Window* window, int x, int y);
 int Window_screen_x(Window* window);
 int Window_screen_y(Window* window);                   
 void Window_paint(Window* window, List* dirty_regions, uint8_t paint_children);

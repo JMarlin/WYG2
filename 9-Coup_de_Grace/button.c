@@ -18,12 +18,12 @@ Button* Button_new(int x, int y, int w, int h) {
     //Override default window callbacks
     button->window.paint_function = Button_paint;
     button->window.mousedown_function = Button_mousedown_handler;
-
-    //Init the new button mousedown handler
-    button->onmousedown = (ButtonMousedownHandler)0;
+    button->window.mouseup_function = Button_mouseup_handler;
+    button->window.mouseout_function = Button_mouseout_handler;
+    button->window.mouseclick_function = (WindowMouseclickHandler)0;
     
     //And clear the toggle value
-    button->color_toggle = 0;
+    button->depressed = 0;
 
     return button;
 }
@@ -33,14 +33,8 @@ void Button_paint(Window* button_window) {
     int title_len;
     Button* button = (Button*)button_window;
 
-    uint32_t border_color;
-    if(button->color_toggle)
-        border_color = WIN_TITLECOLOR;
-    else
-        border_color = WIN_BGCOLOR - 0x101010;
-
     draw_panel(button_window->context, 0, 0, button_window->width,
-               button_window->height, WIN_BGCOLOR, 1, button->color_toggle);
+               button_window->height, WIN_BGCOLOR, 1, button->depressed);
     Context_fill_rect(button_window->context, 1, 1, button_window->width - 2,
                       button_window->height - 2, WIN_BGCOLOR);   
 
@@ -63,14 +57,29 @@ void Button_mousedown_handler(Window* button_window, int x, int y) {
 
     Button* button = (Button*)button_window;
 
-    button->color_toggle = !button->color_toggle;
+    button->depressed = 1;
 
     //Since the button has visibly changed state, we need to invalidate the
     //area that needs updating
     Window_invalidate((Window*)button, 0, 0,
                       button->window.height - 1, button->window.width - 1);
+}
 
-    //Fire the assocaited button click event if it exists
-    if(button->onmousedown)
-        button->onmousedown(button, x, y);
+void Button_mouseup_handler(Window* button_window, int x, int y) {
+
+    Button* button = (Button*)button_window;
+
+    button->depressed = 0;
+
+    //Since the button has visibly changed state, we need to invalidate the
+    //area that needs updating
+    Window_invalidate((Window*)button, 0, 0,
+                      button->window.height - 1, button->window.width - 1);
+}
+
+void Button_mouseout_handler(Window* button_window) {
+
+    printf("mouseout\n");
+
+    Button_mouseup_handler(button_window, 0, 0);
 }

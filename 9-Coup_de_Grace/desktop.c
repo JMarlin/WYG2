@@ -40,7 +40,7 @@ Desktop* Desktop_new(Context* context) {
         return desktop;
 
     //Initialize the Window bits of our desktop
-    if(!Window_init((Window*)desktop, 0, 0, context->width, context->height, WIN_NODECORATION, context)) {
+    if(!Window_init((Window*)desktop, 0, 0, context->width, context->height, WIN_NODECORATION | WIN_NORAISE, context)) {
 
         free(desktop);
         return (Desktop*)0;

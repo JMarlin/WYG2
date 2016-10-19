@@ -54,6 +54,7 @@ int Window_init(Window* window, int16_t x, int16_t y, uint16_t width,
     window->drag_off_x = 0;
     window->drag_off_y = 0;
     window->last_button_state = 0;
+    window->click_cycle = 0;
     window->paint_function = Window_paint_handler;
     window->mousedown_function = (WindowMousedownHandler)0;
     window->mouseup_function = (WindowMouseupHandler)0;
@@ -70,20 +71,29 @@ int Window_init(Window* window, int16_t x, int16_t y, uint16_t width,
 
 void Window_mousedown(Window* window, int x, int y) {
 
+    if(window->click_cycle != 2) 
+        return;
+
+    window->click_cycle = 3;
+
     if(window->mousedown_function)
         window->mousedown_function(window, x, y);
 }
 
 void Window_mouseup(Window* window, int x, int y) {
 
-    if(window->last_button_state)
-        Window_mouseclick(window, x, y);
-
     if(window->mouseup_function)
         window->mouseup_function(window, x, y);
+
+    if(window->click_cycle == 3)
+        Window_mouseclick(window, x, y);
+
+    window->click_cycle = 1;
 }
 
 void Window_mouseover(Window* window) {
+
+    window->click_cycle = 1;
 
     if(window->mouseover_function)
         window->mouseover_function(window);
@@ -91,7 +101,7 @@ void Window_mouseover(Window* window) {
 
 void Window_mouseout(Window* window) {
 
-    window->last_button_state = 0;
+    window->click_cycle = 0;
 
     if(window->over_child) {
 
@@ -547,6 +557,9 @@ void Window_raise(Window* window, uint8_t do_draw) {
     Window* parent;
     Window* last_active = (Window*)0;
 
+    if(window->flags & WIN_NORAISE)
+        return;
+
     if(!window->parent)
         return;
 
@@ -557,19 +570,16 @@ void Window_raise(Window* window, uint8_t do_draw) {
 
     last_active = parent->active_child;
 
-     //if(!(window->flags & WIN_NORAISE)) {
+    //Find the child in the list
+    for(i = 0; i < parent->children->count; i++)
+        if((Window*)List_get_at(parent->children, i) == window)
+            break;
 
-        //Find the child in the list
-        for(i = 0; i < parent->children->count; i++)
-            if((Window*)List_get_at(parent->children, i) == window)
-                break;
+    List_remove_at(parent->children, i); //Pull window out of list
+    List_add(parent->children, (void*)window); //Insert at the top
 
-        List_remove_at(parent->children, i); //Pull window out of list
-        List_add(parent->children, (void*)window); //Insert at the top
-    
-        //Make it active 
-        parent->active_child = window;
-    //}
+    //Make it active 
+    parent->active_child = window;
 
     //Do a redraw if it was requested
     if(!do_draw)
@@ -662,6 +672,7 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
 
     int i, inner_x1, inner_y1, inner_x2, inner_y2;
     Window* child;
+    Window* old_over_child = window->over_child;
 
     if(window->drag_child) {
 
@@ -711,7 +722,7 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
             //See if the window has bodydrag enabled or 
             //See if the mouse position lies within the bounds of the current titlebar
             //We check the decoration flag since we can't drag a window without a titlebar
-            if((child->flags & WIN_BODYDRAG) || (
+            if( /* (child->flags & WIN_BODYDRAG) || */ (
                !(child->flags & WIN_NODECORATION) &&
                mouse_y >= child->y && mouse_y < (child->y + WIN_TITLEHEIGHT)
                )) {
@@ -760,6 +771,8 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
 
     //Update the stored mouse button state to match the current state 
     window->last_button_state = mouse_buttons;
+    if(window->click_cycle == 1)
+        window->click_cycle = 2;
 }
 
 void Window_update_context(Window* window, Context* context) {
@@ -775,11 +788,12 @@ void Window_update_context(Window* window, Context* context) {
 //Quick wrapper for shoving a new entry into the child list
 void Window_insert_child(Window* window, Window* child) {
 
+    Window* old_active = window->active_child;
+
     child->parent = window;
-    List_add(window->children, child);
-    child->parent->active_child = child;
-    
+    List_add(window->children, child);   
     Window_update_context(child, window->context);
+    Window_raise(child, 1);
 }
 
 //A method to automatically create a new window in the provided parent window
@@ -788,6 +802,7 @@ Window* Window_create_window(Window* window, int16_t x, int16_t y,
 
     //Attempt to create the window instance
     Window* new_window;
+    Window* old_active;
     if(!(new_window = Window_new(x, y, width, height, flags, window->context)))
         return new_window;
 
@@ -801,7 +816,8 @@ Window* Window_create_window(Window* window, int16_t x, int16_t y,
 
     //Set the new child's parent 
     new_window->parent = window;
-    new_window->parent->active_child = new_window;
+
+    Window_raise(new_window, 1);
 
     return new_window;
 }

@@ -48,6 +48,7 @@ typedef struct Window_struct {
     uint16_t drag_off_x;
     uint16_t drag_off_y;
     uint8_t last_button_state;
+    uint8_t click_cycle;
     WindowPaintHandler paint_function;
     WindowMousedownHandler mousedown_function;
     WindowMouseupHandler mouseup_function;

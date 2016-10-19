@@ -79,7 +79,5 @@ void Button_mouseup_handler(Window* button_window, int x, int y) {
 
 void Button_mouseout_handler(Window* button_window) {
 
-    printf("mouseout\n");
-
     Button_mouseup_handler(button_window, 0, 0);
 }

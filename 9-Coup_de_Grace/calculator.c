@@ -227,7 +227,6 @@ void Calculator_button_handler(Window* button_window, int x, int y) {
     }
 
     calculator->value[calculator->stage] = str_to_int(calculator->text_box->window.title);
-    printf("%i\n", calculator->value[calculator->stage]);
 }
 
 Calculator* Calculator_new(void) {

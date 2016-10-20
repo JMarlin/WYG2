@@ -3,6 +3,9 @@
 
 #include "window.h"
 
+#define BUT_DEPRESSED 0x1
+#define BUT_OVER      0x2
+
 struct Button_struct;
 
 typedef void (*ButtonMousedownHandler)(struct Button_struct*, int, int);
@@ -16,6 +19,7 @@ Button* Button_new(int x, int y, int w, int h);
 void Button_mousedown_handler(Window* button_window, int x, int y);
 void Button_mouseup_handler(Window* button_window, int x, int y);
 void Button_mouseout_handler(Window* button_window);
+void Button_mouseover_handler(Window* button_window);
 void Button_paint(Window* button_window);
 
 #endif //BUTTON_H

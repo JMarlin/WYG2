@@ -101,7 +101,12 @@ void Window_mouseover(Window* window) {
 
 void Window_mouseout(Window* window) {
 
+    int old_click_cycle = window->click_cycle;
+
     window->click_cycle = 0;
+
+    if(old_click_cycle == 3)
+        Window_mouseup(window, 0, 0);
 
     if(window->over_child) {
 
@@ -750,7 +755,7 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
     if(i < 0) {
 
         //If we were previously over a child, handle a mouseout event on it and clear the pointer
-        if(window->over_child && window->over_child->mouseout_function) {
+        if(window->over_child) {
 
             Window_mouseout(window->over_child);
             window->over_child = (Window*)0;

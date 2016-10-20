@@ -20,6 +20,7 @@ Button* Button_new(int x, int y, int w, int h) {
     button->window.mousedown_function = Button_mousedown_handler;
     button->window.mouseup_function = Button_mouseup_handler;
     button->window.mouseout_function = Button_mouseout_handler;
+    button->window.mouseover_function = Button_mouseover_handler;
     button->window.mouseclick_function = (WindowMouseclickHandler)0;
     
     //And clear the toggle value
@@ -33,10 +34,14 @@ void Button_paint(Window* button_window) {
     int title_len;
     Button* button = (Button*)button_window;
 
+    uint32_t bgcolor = button->depressed == BUT_OVER ?
+                       RGB(RVAL(WIN_BGCOLOR) + 0x10, GVAL(WIN_BGCOLOR) + 0x10, BVAL(WIN_BGCOLOR) + 0x10) :
+                       WIN_BGCOLOR;
+
     draw_panel(button_window->context, 0, 0, button_window->width,
-               button_window->height, WIN_BGCOLOR, 1, button->depressed);
+               button_window->height, bgcolor, 1, button->depressed == BUT_DEPRESSED);
     Context_fill_rect(button_window->context, 1, 1, button_window->width - 2,
-                      button_window->height - 2, WIN_BGCOLOR);   
+                      button_window->height - 2, bgcolor);   
 
     //Get the title length
     for(title_len = 0; button_window->title[title_len]; title_len++);
@@ -57,7 +62,7 @@ void Button_mousedown_handler(Window* button_window, int x, int y) {
 
     Button* button = (Button*)button_window;
 
-    button->depressed = 1;
+    button->depressed = BUT_DEPRESSED;
 
     //Since the button has visibly changed state, we need to invalidate the
     //area that needs updating
@@ -69,7 +74,7 @@ void Button_mouseup_handler(Window* button_window, int x, int y) {
 
     Button* button = (Button*)button_window;
 
-    button->depressed = 0;
+    button->depressed = BUT_OVER;
 
     //Since the button has visibly changed state, we need to invalidate the
     //area that needs updating
@@ -79,5 +84,24 @@ void Button_mouseup_handler(Window* button_window, int x, int y) {
 
 void Button_mouseout_handler(Window* button_window) {
 
-    Button_mouseup_handler(button_window, 0, 0);
+    Button* button = (Button*)button_window;
+
+    button->depressed = 0;
+
+    //Since the button has visibly changed state, we need to invalidate the
+    //area that needs updating
+    Window_invalidate((Window*)button, 0, 0,
+                      button->window.height - 1, button->window.width - 1);
+}
+
+void Button_mouseover_handler(Window* button_window) {
+
+    Button* button = (Button*)button_window;
+
+    button->depressed = BUT_OVER;
+
+    //Since the button has visibly changed state, we need to invalidate the
+    //area that needs updating
+    Window_invalidate((Window*)button, 0, 0,
+                      button->window.height - 1, button->window.width - 1);
 }

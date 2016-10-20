@@ -2,10 +2,70 @@
 #include "textbox.h"
 #include <inttypes.h>
 
+int power(int base, int power) {
+
+    int i;
+    int out = 1;
+    char* calc_str;
+
+    for(i = 0; i < power; i++)
+        out *= base;
+
+    return out;
+}
+
+char* int_to_str(int integer) {
+
+    int len, i, result;
+    char* out_str;
+    result = integer;
+
+    for(len = 1; result; len++)
+        result /= 10;
+
+    if(!(out_str = malloc(len * sizeof(char))))
+        return out_str;
+
+    out_str[len - 1] = 0;
+
+    for(i = len - 2; i >= 0; i--) {
+
+        out_str[i] = (integer % 10) + '0';
+        integer /= 10;
+    }
+
+    return out_str;
+}
+
+int str_to_int(char* string) {
+
+    int i, len;
+    int output = 0;
+
+    for(len = 0; string[len]; len++);
+
+    for(i = len - 1; i >= 0; i--) {
+
+        if(string[i] < '0' || string[i] > '9')
+            return output;
+
+        output += (int)(string[i] - '0') * power(10, (len - 1) - i);
+    }
+
+    return output;
+}
+
 void Calculator_button_handler(Window* button_window, int x, int y) {
 
+    char* calc_str;
     Button* button = (Button*)button_window;
     Calculator* calculator = (Calculator*)button->window.parent;
+
+    if(calculator->stage == 2) {
+
+        calculator->stage = 0;
+        Window_set_title((Window*)calculator->text_box, "0");
+    }
 
     if(button == calculator->button_0) {
 
@@ -98,6 +158,76 @@ void Calculator_button_handler(Window* button_window, int x, int y) {
     if(button == calculator->button_c) {
         Window_set_title((Window*)calculator->text_box, "0");
     }
+
+    if(button == calculator->button_add) {
+
+        if(calculator->stage == 0) {
+            
+            calculator->op = '+';
+            calculator->stage = 1;
+            Window_set_title((Window*)calculator->text_box, "0");
+        }
+    }
+
+    if(button == calculator->button_sub) {
+
+        if(calculator->stage == 0) {
+            
+            calculator->op = '-';
+            calculator->stage++;
+            Window_set_title((Window*)calculator->text_box, "0");
+        }
+    }
+
+    if(button == calculator->button_mul) {
+
+        if(calculator->stage == 0) {
+            
+            calculator->op = '*';
+            calculator->stage++;
+            Window_set_title((Window*)calculator->text_box, "0");
+        }
+    }
+
+    if(button == calculator->button_div) {
+
+        if(calculator->stage == 0) {
+            
+            calculator->op = '/';
+            calculator->stage++;
+            Window_set_title((Window*)calculator->text_box, "0");
+        }
+    }
+
+    if(button == calculator->button_ent) {
+
+        if(calculator->stage == 1) {
+
+            calc_str = (char*)0;
+            calculator->stage++;
+
+            if(calculator->op == '+')
+                calc_str = int_to_str(calculator->value[0] + calculator->value[1]);
+
+            if(calculator->op == '-')
+                calc_str = int_to_str(calculator->value[0] - calculator->value[1]);
+
+            if(calculator->op == '*')
+                calc_str = int_to_str(calculator->value[0] * calculator->value[1]);
+
+            if(calculator->op == '/')
+                calc_str = int_to_str(calculator->value[0] / calculator->value[1]);
+
+            if(calc_str) {
+
+                Window_set_title((Window*)calculator->text_box, calc_str);
+                free(calc_str);
+            }
+        }
+    }
+
+    calculator->value[calculator->stage] = str_to_int(calculator->text_box->window.title);
+    printf("%i\n", calculator->value[calculator->stage]);
 }
 
 Calculator* Calculator_new(void) {
@@ -116,6 +246,11 @@ Calculator* Calculator_new(void) {
         free(calculator);
         return (Calculator*)0;
     }
+
+    calculator->value[0] = 0;
+    calculator->value[1] = 0;
+    calculator->value[2] = 0;
+    calculator->stage = 0;
 
     //Set a default title 
     Window_set_title((Window*)calculator, "Calculator");

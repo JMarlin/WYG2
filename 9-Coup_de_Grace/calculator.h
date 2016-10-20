@@ -7,6 +7,9 @@
 //Another special case of Window
 typedef struct Calculator_struct {
     Window window; //'inherit' Window
+    int value[3];
+    int stage;
+    char op;
     TextBox* text_box;
     Button* button_1;
     Button* button_2;

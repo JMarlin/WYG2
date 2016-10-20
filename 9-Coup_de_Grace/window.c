@@ -68,7 +68,8 @@ int Window_init(Window* window, int16_t x, int16_t y, uint16_t width,
     window->active_child = (Window*)0;
     window->over_child = (Window*)0;
     window->title = (char*)0;
-  
+    window->delete_function = Window_delete_handler;
+
     return 1;
 }
 
@@ -960,4 +961,36 @@ void Window_show(Window* window) {
     window->flags &= ~WIN_HIDDEN;
 
     Window_paint(window, (List*)0, 1);
+}
+
+void Window_delete(Window* window) {
+
+    Window_hide(window);
+
+    if(window->delete_function)
+        window->delete_function((void*)window);
+}
+
+void Window_delete_handler(void* window_object) {
+
+    int i;
+    Window* window = (Window*)window_object;
+
+    if(window->parent) {
+
+        for(i = 0;
+            i < window->parent->children->count && 
+            (Window*)List_get_at(window->parent->children, i) != window; 
+            i++);
+
+        if(i < window->parent->children->count)
+            List_remove_at(window->parent->children, i);
+    }
+
+    while(window->children->count)
+        Window_delete(List_remove_at(window->children, 0));
+ 
+    free(window->children);
+    Context_delete(window->context);
+    free(window);
 }

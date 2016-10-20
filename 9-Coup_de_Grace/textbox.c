@@ -15,8 +15,14 @@ TextBox* TextBox_new(int x, int y, int width, int height) {
 
     //Override default window draw callback
     text_box->window.paint_function = TextBox_paint;
+    text_box->window.delete_function = TextBox_delete_handler;
 
     return text_box;
+}
+
+void TextBox_delete_handler(void* text_box_object) {
+
+    Window_delete_handler(text_box_object);
 }
 
 void TextBox_paint(Window* text_box_window) {

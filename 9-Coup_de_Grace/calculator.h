@@ -30,5 +30,6 @@ typedef struct Calculator_struct {
 } Calculator;
 
 Calculator* Calculator_new(void);
+void Calculator_delete_handler(void* calculator_object);
 
 #endif //CALCULATOR_H

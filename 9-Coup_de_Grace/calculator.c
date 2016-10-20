@@ -58,10 +58,10 @@ int str_to_int(char* string) {
 
 void Calc_paint(Window* calc_window) {
 
-    draw_panel(calc_window->context, 0, 0, calc_window->width,
-               calc_window->height, WIN_BGCOLOR, 2, 0);
-    Context_fill_rect(calc_window->context, 2, 2, calc_window->width - 4,
-                      calc_window->height - 4, WIN_BGCOLOR); 
+    draw_panel(calc_window->context, 0, 0, calc_window->width - (WIN_BORDERWIDTH * 2),
+               calc_window->height - WIN_BORDERWIDTH - WIN_TITLEHEIGHT, WIN_BGCOLOR, 2, 0);
+    Context_fill_rect(calc_window->context, 2, 2, calc_window->width - (WIN_BORDERWIDTH * 2) - 4,
+                      calc_window->height - WIN_BORDERWIDTH - WIN_TITLEHEIGHT - 4, WIN_BGCOLOR); 
 }
 
 void Calculator_button_handler(Window* button_window, int x, int y) {
@@ -249,7 +249,7 @@ Calculator* Calculator_new(void) {
     if(!Window_init((Window*)calculator, 0, 0,
                     (2 * WIN_BORDERWIDTH) + 145,
                     WIN_TITLEHEIGHT + WIN_BORDERWIDTH + 170,
-                    WIN_BODYDRAG | WIN_NODECORATION , (Context*)0)) {
+                    0 , (Context*)0)) {
 
         free(calculator);
         return (Calculator*)0;
@@ -261,6 +261,7 @@ Calculator* Calculator_new(void) {
     calculator->stage = 0;
 
     calculator->window.paint_function = Calc_paint;
+    calculator->window.delete_function = Calculator_delete_handler;
 
     //Set a default title 
     Window_set_title((Window*)calculator, "Calculator");
@@ -348,4 +349,9 @@ Calculator* Calculator_new(void) {
 
     //Return the finished calculator
     return calculator;
+}
+
+void Calculator_delete_handler(void* calculator_object) {
+
+    Window_delete_handler(calculator_object);
 }

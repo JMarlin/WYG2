@@ -21,5 +21,6 @@ void Button_mouseup_handler(Window* button_window, int x, int y);
 void Button_mouseout_handler(Window* button_window);
 void Button_mouseover_handler(Window* button_window);
 void Button_paint(Window* button_window);
+void Button_delete_handler(void* button_object);
 
 #endif //BUTTON_H

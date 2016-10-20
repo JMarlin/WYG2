@@ -22,11 +22,17 @@ Button* Button_new(int x, int y, int w, int h) {
     button->window.mouseout_function = Button_mouseout_handler;
     button->window.mouseover_function = Button_mouseover_handler;
     button->window.mouseclick_function = (WindowMouseclickHandler)0;
+    button->window.delete_function = Button_delete_handler;
     
     //And clear the toggle value
     button->depressed = 0;
 
     return button;
+}
+
+void Button_delete_handler(void* button_object) {
+
+    Window_delete_handler(button_object);
 }
 
 void Button_paint(Window* button_window) {

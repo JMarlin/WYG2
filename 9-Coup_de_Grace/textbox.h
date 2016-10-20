@@ -10,5 +10,6 @@ typedef struct TextBox_struct {
 
 TextBox* TextBox_new(int x, int y, int width, int height);
 void TextBox_paint(Window* text_box_window);
+void TextBox_delete_handler(void* text_box_object);
 
 #endif //TEXTBOX_H

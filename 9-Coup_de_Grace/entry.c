@@ -31,6 +31,11 @@ void hide_active(Window* button_window, int x, int y) {
     Window_hide((Window*)List_get_at(desktop->window.children, desktop->window.children->count - 1));
 }
 
+void close_active(Window* button_window, int x, int y) {
+
+    Window_delete((Window*)List_get_at(desktop->window.children, desktop->window.children->count - 1));
+}
+
 void show_all(Window* button_window, int x, int y) {
 
     int i;
@@ -64,6 +69,11 @@ int main(int argc, char* argv[]) {
     Window_set_title((Window*)show_button, "Show All");
     show_button->window.mouseclick_function = show_all;
     Window_insert_child((Window*)desktop, (Window*)show_button);
+
+    Button* close_button = Button_new(10, 130, 150, 30);
+    Window_set_title((Window*)close_button, "Close Active");
+    close_button->window.mouseclick_function = close_active;
+    Window_insert_child((Window*)desktop, (Window*)close_button);
 
     //Initial draw
     Window_paint((Window*)desktop, (List*)0, 1);

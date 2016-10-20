@@ -37,6 +37,7 @@ typedef void (*WindowMouseclickHandler)(struct Window_struct*, int, int);
 
 typedef struct Window_struct {  
     struct Window_struct* parent;
+    unsigned int id;
     int16_t x;
     int16_t y;
     uint16_t width;

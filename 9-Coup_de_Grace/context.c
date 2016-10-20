@@ -9,6 +9,8 @@
 //Constructor for our context
 Context* Context_new(uint16_t width, uint16_t height, uint32_t* buffer) {
 
+    static unsigned int handle_source = 0;
+
     //Attempt to allocate
     Context* context;
     if(!(context = (Context*)malloc(sizeof(Context))))
@@ -22,12 +24,26 @@ Context* Context_new(uint16_t width, uint16_t height, uint32_t* buffer) {
     }
 
     //Finish assignments
+    context->id = ++handle_source;
     context->width = width; 
     context->height = height; 
     context->buffer = buffer;
     context->clipping_on = 0;
 
     return context;
+}
+
+//Clone from another context
+Context* Context_new_from(Context* source_context) {
+
+    return Context_new(source_context->width, source_context->height, source_context->buffer);
+}
+
+void Context_delete(Context* context) {
+
+    Context_clear_clip_rects(context);
+    free(context->clip_rects);
+    free(context);
 }
 
 void Context_clipped_rect(Context* context, int x, int y, unsigned int width,

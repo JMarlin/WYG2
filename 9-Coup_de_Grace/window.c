@@ -37,17 +37,20 @@ Window* Window_new(int16_t x, int16_t y, uint16_t width,
 int Window_init(Window* window, int16_t x, int16_t y, uint16_t width,
                 uint16_t height, uint16_t flags, Context* context) {
 
+    static unsigned int handle_source = 0;
+
     //Moved over here from the desktop 
     //Create child list or clean up and fail
     if(!(window->children = List_new()))
         return 0;
 
     //Assign the property values
+    window->id = ++handle_source;
     window->x = x;
     window->y = y;
     window->width = width;
     window->height = height;
-    window->context = context;
+    window->context = context ? Context_new_from(context) : context;
     window->flags = flags;
     window->parent = (Window*)0;
     window->drag_child = (Window*)0;
@@ -210,7 +213,7 @@ void Window_draw_border(Window* window) {
 }
 
 //Apply clipping for window bounds without subtracting child window rects
-void Window_apply_bound_clipping(Window* window, int in_recursion, List* dirty_regions) {
+void Window_apply_bound_clipping(Window* window, Context* context, int in_recursion, List* dirty_regions) {
 
     Rect *temp_rect, *current_dirty_rect, *clone_dirty_rect;
     int screen_x, screen_y, i;
@@ -218,7 +221,7 @@ void Window_apply_bound_clipping(Window* window, int in_recursion, List* dirty_r
     Window* clipping_window;
 
     //Can't do this without a context
-    if(!window->context)
+    if(!context)
         return;
 
     //Build the visibility rectangle for this window
@@ -265,26 +268,26 @@ void Window_apply_bound_clipping(Window* window, int in_recursion, List* dirty_r
                                             current_dirty_rect->right);
                 
                 //Add
-                Context_add_clip_rect(window->context, clone_dirty_rect);
+                Context_add_clip_rect(context, clone_dirty_rect);
             }
 
             //Finally, intersect this top level window against them
-            Context_intersect_clip_rect(window->context, temp_rect);
+            Context_intersect_clip_rect(context, temp_rect);
 
         } else {
 
-            Context_add_clip_rect(window->context, temp_rect);
+            Context_add_clip_rect(context, temp_rect);
         }
 
         return;
     }
 
     //Otherwise, we first reduce our clipping area to the visibility area of our parent
-    Window_apply_bound_clipping(window->parent, 1, dirty_regions);
+    Window_apply_bound_clipping(window->parent, context, 1, dirty_regions);
 
     //Now that we've reduced our clipping area to our parent's clipping area, we can
     //intersect our own bounds rectangle to get our main visible area  
-    Context_intersect_clip_rect(window->context, temp_rect);
+    Context_intersect_clip_rect(context, temp_rect);
 
     //And finally, we subtract the rectangles of any siblings that are occluding us 
     clip_windows = Window_get_windows_above(window->parent, window);
@@ -301,7 +304,7 @@ void Window_apply_bound_clipping(Window* window, int in_recursion, List* dirty_r
         temp_rect = Rect_new(screen_y, screen_x,
                              screen_y + clipping_window->height - 1,
                              screen_x + clipping_window->width - 1);
-        Context_subtract_clip_rect(window->context, temp_rect);
+        Context_subtract_clip_rect(context, temp_rect);
         free(temp_rect);
     }
 
@@ -319,7 +322,7 @@ void Window_update_title(Window* window) {
         return;
 
     //Start by limiting painting to the window's visible area
-    Window_apply_bound_clipping(window, 0, (List*)0);
+    Window_apply_bound_clipping(window, window->context, 0, (List*)0);
 
     //Draw border
     Window_draw_border(window);
@@ -379,7 +382,7 @@ void Window_paint(Window* window, List* dirty_regions, uint8_t paint_children) {
         return;
 
     //Start by limiting painting to the window's visible area
-    Window_apply_bound_clipping(window, 0, dirty_regions);
+    Window_apply_bound_clipping(window, window->context, 0, dirty_regions);
 
     //Set the context translation
     screen_x = Window_screen_x(window);
@@ -601,7 +604,8 @@ void Window_raise(Window* window, uint8_t do_draw) {
     Window_paint(window, (List*)0, 1);
 
     //Make sure the old active window gets an updated title color 
-    Window_update_title(last_active);
+    if(last_active) 
+        Window_update_title(last_active);
 }
 
 //We're wrapping this guy so that we can handle any needed redraw
@@ -619,7 +623,7 @@ void Window_move(Window* window, int new_x, int new_y) {
 
     //We'll hijack our dirty rect collection from our existing clipping operations
     //So, first we'll get the visible regions of the original window position
-    Window_apply_bound_clipping(window, 0, (List*)0);
+    Window_apply_bound_clipping(window, window->context, 0, (List*)0);
 
     //Temporarily update the window position
     window->x = new_x;
@@ -792,7 +796,10 @@ void Window_update_context(Window* window, Context* context) {
 
     int i;
 
-    window->context = context;
+    if(window->context)
+        Context_delete(window->context);
+
+    window->context = context ? Context_new_from(context) : context;
 
     for(i = 0; i < window->children->count; i++)
         Window_update_context((Window*)List_get_at(window->children, i), context);

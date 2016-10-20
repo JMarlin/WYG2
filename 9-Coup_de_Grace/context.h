@@ -14,6 +14,7 @@
 
 //A structure for holding information about a framebuffer
 typedef struct Context_struct {  
+    unsigned int id;
     uint32_t* buffer; //A pointer to our framebuffer
     uint16_t width; //The dimensions of the framebuffer
     uint16_t height; 
@@ -25,6 +26,8 @@ typedef struct Context_struct {
 
 //Methods
 Context* Context_new(uint16_t width, uint16_t height, uint32_t* buffer);
+Context* Context_new_from(Context* source_context);
+void Context_delete(Context* context);
 void Context_fill_rect(Context* context, int x, int y,  
                        unsigned int width, unsigned int height, uint32_t color);
 void Context_horizontal_line(Context* context, int x, int y,

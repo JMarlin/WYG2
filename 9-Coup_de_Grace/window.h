@@ -3,6 +3,7 @@
 
 #include "context.h"
 #include <inttypes.h>
+#include "obj.h"
 
 //================| Window Class Declaration |================//
 
@@ -20,6 +21,7 @@
 #define WIN_NODECORATION 0x1
 #define WIN_NORAISE 0x2
 #define WIN_BODYDRAG 0x4
+#define WIN_HIDDEN 0x8
 
 //Forward struct declaration for function type declarations
 struct Window_struct;
@@ -57,6 +59,7 @@ typedef struct Window_struct {
     WindowMousemoveHandler mousemove_function;
     WindowMouseclickHandler mouseclick_function;
     char* title;
+    DeleteFunction delete_function;
 } Window;
 
 //Methods
@@ -81,11 +84,15 @@ List* Window_get_windows_above(Window* parent, Window* child);
 List* Window_get_windows_below(Window* parent, Window* child);
 void Window_raise(Window* window, uint8_t do_draw);
 void Window_move(Window* window, int new_x, int new_y);
+void Window_hide(Window* window);
+void Window_show(Window* window);
 Window* Window_create_window(Window* window, int16_t x, int16_t y,  
                              uint16_t width, int16_t height, uint16_t flags);
 void Window_insert_child(Window* window, Window* child);   
 void Window_invalidate(Window* window, int top, int left, int bottom, int right);
 void Window_set_title(Window* window, char* new_title);                       
-void Window_append_title(Window* window, char* additional_chars);                         
+void Window_append_title(Window* window, char* additional_chars);
+void Window_delete(Window* window);                         
+void Window_delete_handler(void* window_object);
 
 #endif //WINDOW_H

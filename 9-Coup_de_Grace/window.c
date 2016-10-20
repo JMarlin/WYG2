@@ -313,10 +313,9 @@ void Window_update_title(Window* window) {
 
     int screen_x, screen_y;
 
-    if(!window->context)
-        return;
-
-    if(window->flags & WIN_NODECORATION)
+    if(!window->context || 
+       (window->flags & WIN_HIDDEN) ||
+       (window->flags & WIN_NODECORATION))
         return;
 
     //Start by limiting painting to the window's visible area
@@ -376,7 +375,7 @@ void Window_paint(Window* window, List* dirty_regions, uint8_t paint_children) {
     Rect* temp_rect;
 
     //Can't paint without a context
-    if(!window->context)
+    if(!window->context || (window->flags & WIN_HIDDEN))
         return;
 
     //Start by limiting painting to the window's visible area
@@ -410,6 +409,9 @@ void Window_paint(Window* window, List* dirty_regions, uint8_t paint_children) {
     for(i = 0; i < window->children->count; i++) {
 
         current_child = (Window*)List_get_at(window->children, i);
+
+        if(current_child->flags & WIN_HIDDEN)
+            continue;
 
         child_screen_x = Window_screen_x(current_child);
         child_screen_y = Window_screen_y(current_child);
@@ -505,6 +507,9 @@ List* Window_get_windows_above(Window* parent, Window* child) {
 
         current_window = List_get_at(parent->children, i);
 
+        if(current_window->flags & WIN_HIDDEN)
+            continue;
+
         //Our good old rectangle intersection logic
         if(current_window->x <= (child->x + child->width - 1) &&
 		   (current_window->x + current_window->width - 1) >= child->x &&
@@ -543,6 +548,9 @@ List* Window_get_windows_below(Window* parent, Window* child) {
     for(i--; i > -1; i--) {
 
         current_window = List_get_at(parent->children, i);
+
+        if(current_window->flags & WIN_HIDDEN)
+            continue;
 
         //Our good old rectangle intersection logic
         if(current_window->x <= (child->x + child->width - 1) &&
@@ -677,7 +685,6 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
 
     int i, inner_x1, inner_y1, inner_x2, inner_y2;
     Window* child;
-    Window* old_over_child = window->over_child;
 
     if(window->drag_child) {
 
@@ -702,7 +709,8 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
 
         //If mouse isn't window bounds, we can't possibly be interacting with it 
         if(!(mouse_x >= child->x && mouse_x < (child->x + child->width) &&
-           mouse_y >= child->y && mouse_y < (child->y + child->height))) 
+           mouse_y >= child->y && mouse_y < (child->y + child->height)) || 
+           (child->flags & WIN_HIDDEN)) 
             continue;
 
         //Do mouseover and mouseout events 
@@ -727,8 +735,8 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
             //See if the window has bodydrag enabled or 
             //See if the mouse position lies within the bounds of the current titlebar
             //We check the decoration flag since we can't drag a window without a titlebar
-            if( /* (child->flags & WIN_BODYDRAG) || */ (
-               !(child->flags & WIN_NODECORATION) &&
+            if((child->flags & WIN_BODYDRAG) ||  (
+               !(child->flags & WIN_BODYDRAG) && !(child->flags & WIN_NODECORATION) &&
                mouse_y >= child->y && mouse_y < (child->y + WIN_TITLEHEIGHT)
                )) {
 
@@ -737,16 +745,8 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
                 window->drag_off_x = mouse_x - child->x;
                 window->drag_off_y = mouse_y - child->y;
                 window->drag_child = child;
-                
-                //We break without setting target_child if we're doing a drag since
-                //that shouldn't trigger a mouse event in the child 
-                break;
             }
         }
-
-        //Found a target, so forward the mouse event to that window and quit looking
-        if(window->over_child) 
-            Window_process_mouse(child, mouse_x - child->x, mouse_y - child->y, mouse_buttons); 
         
         break;
     }
@@ -763,6 +763,14 @@ void Window_process_mouse(Window* window, uint16_t mouse_x,
             //We reentered the parent from a child, so fire a mouseover on the parent 
             Window_mouseover(window);
         }
+    } else {
+
+        //Found a target, so forward the mouse event to that window and quit looking
+        Window_process_mouse(child, mouse_x - child->x, mouse_y - child->y, mouse_buttons); 
+
+        //Cancel any body drag if the mouse was found to be over a child in the dragged child 
+        if((child->flags & WIN_BODYDRAG) && (window->drag_child == child) && !!child->over_child)
+            window->drag_child = (Window*)0;
     }
 
     //If we didn't find a target in the search, then we ourselves are the target of any clicks
@@ -905,3 +913,44 @@ void Window_append_title(Window* window, char* additional_chars) {
         Window_update_title(window); 
 }
 
+void Window_hide(Window* window) {
+
+    List* dirty_list;
+    Rect* dirty_rect;
+
+    if(!window->parent || (window->flags & WIN_HIDDEN))
+        return;
+
+    window->flags |= WIN_HIDDEN;
+    
+    //Build a dirty rect list for the mouse area
+    if(!(dirty_list = List_new()))
+        return;
+
+    if(!(dirty_rect = Rect_new(Window_screen_y(window), Window_screen_x(window), 
+                               Window_screen_y(window) + window->height - 1,
+                               Window_screen_x(window) + window->width - 1))) {
+
+        free(dirty_list);
+        return;
+    }
+
+    List_add(dirty_list, dirty_rect);
+
+    //Do a dirty update for the desktop, which will, in turn, do a 
+    //dirty update for all affected child windows
+    Window_paint(window->parent, dirty_list, 1); 
+
+    free(List_remove_at(dirty_list, 0));
+    free(dirty_list);
+}
+
+void Window_show(Window* window) {
+
+    if(!(window->flags & WIN_HIDDEN))
+        return;
+
+    window->flags &= ~WIN_HIDDEN;
+
+    Window_paint(window, (List*)0, 1);
+}

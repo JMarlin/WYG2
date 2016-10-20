@@ -26,6 +26,19 @@ void spawn_calculator(Window* button_window, int x, int y) {
     Window_move((Window*)temp_calc, 0, 0);
 }
 
+void hide_active(Window* button_window, int x, int y) {
+
+    Window_hide((Window*)List_get_at(desktop->window.children, desktop->window.children->count - 1));
+}
+
+void show_all(Window* button_window, int x, int y) {
+
+    int i;
+
+    for(i = 0; i < desktop->window.children->count; i++)
+        Window_show((Window*)List_get_at(desktop->window.children, i));
+}
+
 //Create and draw a few rectangles and exit
 int main(int argc, char* argv[]) {
 
@@ -41,6 +54,16 @@ int main(int argc, char* argv[]) {
     Window_set_title((Window*)launch_button, "New Calculator");
     launch_button->window.mouseclick_function = spawn_calculator;
     Window_insert_child((Window*)desktop, (Window*)launch_button);
+
+    Button* hide_button = Button_new(10, 50, 150, 30);
+    Window_set_title((Window*)hide_button, "Hide Active");
+    hide_button->window.mouseclick_function = hide_active;
+    Window_insert_child((Window*)desktop, (Window*)hide_button);
+
+    Button* show_button = Button_new(10, 90, 150, 30);
+    Window_set_title((Window*)show_button, "Show All");
+    show_button->window.mouseclick_function = show_all;
+    Window_insert_child((Window*)desktop, (Window*)show_button);
 
     //Initial draw
     Window_paint((Window*)desktop, (List*)0, 1);

@@ -1,6 +1,7 @@
 #include "calculator.h"
 #include "textbox.h"
 #include <inttypes.h>
+#include "styleutils.h"
 
 int power(int base, int power) {
 
@@ -53,6 +54,14 @@ int str_to_int(char* string) {
     }
 
     return output;
+}
+
+void Calc_paint(Window* calc_window) {
+
+    draw_panel(calc_window->context, 0, 0, calc_window->width,
+               calc_window->height, WIN_BGCOLOR, 2, 0);
+    Context_fill_rect(calc_window->context, 2, 2, calc_window->width - 4,
+                      calc_window->height - 4, WIN_BGCOLOR); 
 }
 
 void Calculator_button_handler(Window* button_window, int x, int y) {
@@ -240,7 +249,7 @@ Calculator* Calculator_new(void) {
     if(!Window_init((Window*)calculator, 0, 0,
                     (2 * WIN_BORDERWIDTH) + 145,
                     WIN_TITLEHEIGHT + WIN_BORDERWIDTH + 170,
-                    0, (Context*)0)) {
+                    WIN_BODYDRAG | WIN_NODECORATION , (Context*)0)) {
 
         free(calculator);
         return (Calculator*)0;
@@ -250,6 +259,8 @@ Calculator* Calculator_new(void) {
     calculator->value[1] = 0;
     calculator->value[2] = 0;
     calculator->stage = 0;
+
+    calculator->window.paint_function = Calc_paint;
 
     //Set a default title 
     Window_set_title((Window*)calculator, "Calculator");

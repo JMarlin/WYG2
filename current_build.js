@@ -7727,7 +7727,7 @@ function _Context_new($width,$height,$buffer) {
  $height = $height|0;
  $buffer = $buffer|0;
  var $0 = 0, $1 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $2 = 0, $20 = 0, $21 = 0, $22 = 0, $23 = 0, $24 = 0, $25 = 0, $26 = 0;
- var $27 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $context = 0, label = 0, sp = 0;
+ var $27 = 0, $28 = 0, $29 = 0, $3 = 0, $30 = 0, $31 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $context = 0, label = 0, sp = 0;
  sp = STACKTOP;
  STACKTOP = STACKTOP + 16|0; if ((STACKTOP|0) >= (STACK_MAX|0)) abort();
  $1 = $width;
@@ -7739,8 +7739,8 @@ function _Context_new($width,$height,$buffer) {
  if (!($5)) {
   $6 = $context;
   $0 = $6;
-  $27 = $0;
-  STACKTOP = sp;return ($27|0);
+  $31 = $0;
+  STACKTOP = sp;return ($31|0);
  }
  $7 = (_List_new()|0);
  $8 = $context;
@@ -7753,31 +7753,37 @@ function _Context_new($width,$height,$buffer) {
   HEAP32[12>>2] = $13;
   $14 = $context;
   HEAP32[$14>>2] = $13;
-  $15 = $1;
-  $16 = $context;
-  $17 = ((($16)) + 8|0);
-  HEAP16[$17>>1] = $15;
-  $18 = $2;
-  $19 = $context;
-  $20 = ((($19)) + 10|0);
-  HEAP16[$20>>1] = $18;
-  $21 = $3;
-  $22 = $context;
-  $23 = ((($22)) + 4|0);
-  HEAP32[$23>>2] = $21;
-  $24 = $context;
-  $25 = ((($24)) + 24|0);
-  HEAP8[$25>>0] = 0;
+  $15 = $context;
+  $16 = ((($15)) + 12|0);
+  HEAP32[$16>>2] = 0;
+  $17 = $context;
+  $18 = ((($17)) + 16|0);
+  HEAP32[$18>>2] = 0;
+  $19 = $1;
+  $20 = $context;
+  $21 = ((($20)) + 8|0);
+  HEAP16[$21>>1] = $19;
+  $22 = $2;
+  $23 = $context;
+  $24 = ((($23)) + 10|0);
+  HEAP16[$24>>1] = $22;
+  $25 = $3;
   $26 = $context;
-  $0 = $26;
-  $27 = $0;
-  STACKTOP = sp;return ($27|0);
+  $27 = ((($26)) + 4|0);
+  HEAP32[$27>>2] = $25;
+  $28 = $context;
+  $29 = ((($28)) + 24|0);
+  HEAP8[$29>>0] = 0;
+  $30 = $context;
+  $0 = $30;
+  $31 = $0;
+  STACKTOP = sp;return ($31|0);
  } else {
   $11 = $context;
   _free($11);
   $0 = 0;
-  $27 = $0;
-  STACKTOP = sp;return ($27|0);
+  $31 = $0;
+  STACKTOP = sp;return ($31|0);
  }
  return (0)|0;
 }

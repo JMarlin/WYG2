@@ -25,6 +25,8 @@ Context* Context_new(uint16_t width, uint16_t height, uint32_t* buffer) {
 
     //Finish assignments
     context->id = ++handle_source;
+    context->translate_x = 0;
+    context->translate_y = 0;
     context->width = width; 
     context->height = height; 
     context->buffer = buffer;
